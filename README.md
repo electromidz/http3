@@ -3,6 +3,7 @@
 This project demonstrates a simple HTTP/3 client using the `quinn` and `h3` libraries in Rust. The client establishes a QUIC connection to a server, sends a JSON payload, and receives a response. The project is designed to showcase how to use HTTP/3 over QUIC for secure and efficient communication.
 
 ![HTTP/3 Client Flow](https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/QUIC_Transport_Layer.svg/1200px-QUIC_Transport_Layer.svg.png)
+https://aws.amazon.com/blogs/aws/new-http-3-support-for-amazon-cloudfront/
 
 ## Features
 
