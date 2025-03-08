@@ -2,6 +2,8 @@
 
 This project demonstrates a simple HTTP/3 client using the `quinn` and `h3` libraries in Rust. The client establishes a QUIC connection to a server, sends a JSON payload, and receives a response. The project is designed to showcase how to use HTTP/3 over QUIC for secure and efficient communication.
 
+![HTTP/3 Client Flow](https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/QUIC_Transport_Layer.svg/1200px-QUIC_Transport_Layer.svg.png)
+
 ## Features
 
 - **QUIC Protocol**: Utilizes the QUIC transport protocol for low-latency, secure communication.
@@ -37,6 +39,12 @@ cargo run
 ```
 
 The client will attempt to connect to `https://127.0.0.1:8080` and send a JSON payload. Ensure that your server is running and configured to accept HTTP/3 connections.
+
+## Data Flow Diagram
+
+Below is a simple representation of how the client sends data to the server over HTTP/3:
+
+![HTTP/3 Request Flow](https://upload.wikimedia.org/wikipedia/commons/2/2b/HTTP_3_request_response.svg)
 
 ## Configuration
 
@@ -92,7 +100,7 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 
 ## License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the MIT License. See the LICENSE file for details.
 
 ## Acknowledgments
 
@@ -101,7 +109,7 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 ## Further Reading
 
-- [QUIC Protocol](https://datatracker.ietf.org/doc/html/rfc9000)
-- [HTTP/3 Specification](https://datatracker.ietf.org/doc/html/rfc9114)
+- [QUIC Protocol](https://en.wikipedia.org/wiki/QUIC)
+- [HTTP/3 Specification](https://www.rfc-editor.org/rfc/rfc9114.html)
 - [Rust Programming Language](https://www.rust-lang.org/)
 
