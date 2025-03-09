@@ -1,21 +1,13 @@
-use std::{error::Error, sync::Arc};
-use std::fmt::Debug;
-use std::sync;
-use tracing::{info, error};
-use rustls::pki_types::CertificateDer;
-use rustls::{ClientConfig,  RootCertStore};
-use quinn::{ClientConfig as QuinnClientConfig, Endpoint, TransportConfig};
-use std::fs::File;
-use std::io::BufReader;
-use rustls_pemfile::{certs};
-use serde_json::json;
-use http::Request;
-use tokio::io::AsyncWriteExt;
-use futures::future;
 use bytes::Bytes;
+use futures::future;
 use serde::{Deserialize, Serialize};
-
-static ALPN: &[u8] = b"h3";
+use serde_json::json;
+use std::fmt::Debug;
+use std::{error::Error, sync::Arc};
+use tokio::io::AsyncWriteExt;
+use tracing::info;
+mod utils;
+use utils::{configure_tls, load_ca_cert};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct UserRegistration {
@@ -23,11 +15,18 @@ struct UserRegistration {
     public_key: Vec<u8>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct UserAddress {
+    address: String,
+}
+
 #[tokio::main]
-async fn main()-> Result<(),Box<dyn Error>> {
+async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt::init();
-    rustls::crypto::ring::default_provider().install_default().expect("Failed to install rustls crypto provider");
-    let uri :http::Uri = "https://127.0.0.1".parse()?;
+    rustls::crypto::ring::default_provider()
+        .install_default()
+        .expect("Failed to install rustls crypto provider");
+    let uri: http::Uri = "https://127.0.0.1".parse()?;
     if uri.scheme() != Some(&http::uri::Scheme::HTTPS) {
         Err("uri scheme must be 'https'")?;
     }
@@ -42,10 +41,8 @@ async fn main()-> Result<(),Box<dyn Error>> {
 
     // Load CA certificates
     let roots = load_ca_cert("certs/ca.crt")?;
-    let client_crypto= configure_tls(roots)?;
-    info!("DNS client configured: {:?}", client_crypto);
-
-
+    let client_crypto = configure_tls(roots)?;
+    //info!("DNS client configured: {:?}", client_crypto);
 
     let mut client_endpoint = h3_quinn::quinn::Endpoint::client("0.0.0.0:0".parse()?)?;
     let client_config = quinn::ClientConfig::new(Arc::new(
@@ -83,16 +80,26 @@ async fn main()-> Result<(),Box<dyn Error>> {
             public_key: vec![8], // Example public key as Vec<u8>
         };
 
+        let user_addr = UserAddress {
+            address: "127.0.0.1".to_string(),
+        };
+
         // Serialize the struct to JSON
+        // let body = json!({
+        //     "address": user_registration.address,
+        //     "public_key": user_registration.public_key, // Serialize Vec<u8> directly
+        // })
+        // .to_string();
         let body = json!({
-        "address": user_registration.address,
-        "public_key": user_registration.public_key, // Serialize Vec<u8> directly
-    }).to_string();
+            "address": user_addr.address,
+        })
+        .to_string();
 
         println!("Serialized JSON body: {}", body);
+        //let stream = post(send_request, uri, body);
 
-
-        let req = http::Request::builder().uri("https://127.0.0.1/register")
+        let req = http::Request::builder()
+            .uri("https://127.0.0.1/getAddress")
             .header("Content_Type", "application/json")
             .method("POST")
             .body(())?;
@@ -132,24 +139,3 @@ async fn main()-> Result<(),Box<dyn Error>> {
 
     Ok(())
 }
-fn load_ca_cert(path: &str) -> Result<RootCertStore, Box<dyn std::error::Error>> {
-    let mut roots = rustls::RootCertStore::empty();
-    let mut pem  = BufReader::new(File::open(path)?);
-    let certs = rustls_pemfile::certs(&mut pem);
-    for cert in certs.into_iter() {
-        roots.add(cert?).map_err(|e| {
-            error!("Failed to add CA certificate: {}", e);
-            e
-        })?;
-    }
-    Ok(roots)
-}
-
-fn configure_tls(roots: RootCertStore) -> Result<ClientConfig, Box<dyn Error>> {
-    let mut config = ClientConfig::builder().with_root_certificates(roots).with_no_client_auth();
-    // Enable HTTP/3 ALPN
-    config.enable_early_data = true;
-    config.alpn_protocols.push(ALPN.to_vec());
-    Ok(config)
-}
-
